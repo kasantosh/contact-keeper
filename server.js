@@ -2,8 +2,12 @@ const express = require("express");
 const users = require('./routes/users');
 const contacts = require('./routes/contacts');
 const auth = require('./routes/auth');
+const connectDB = require('./config/db')
 
 const app = express();
+
+// Connect DB
+connectDB();
 
 app.get('/', (req, res) => res.status(200).json({
   status: 'Success',
