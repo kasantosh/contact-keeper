@@ -1,17 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { check, validationResult } = require('express-validator')
+const jwt = require('jsonwebtoken');
+const { check, validationResult } = require('express-validator');
 const User = require('../models/User');
 
 // @route    POST api/users
 // @desc     Resgister a user
 // @access   Public
-router.post('/', [
-  check('name', 'Please add a Name').not().isEmpty(),
-  check('email', 'Please include a valid email').isEmail(),
-  check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 })
-], async (req, res) => {
+router.post('/', 
+  [
+    check('name', 'Please add a Name').not().isEmpty(),
+    check('email', 'Please include a valid email').isEmail(),
+    check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 })
+  ], 
+async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -36,8 +39,20 @@ router.post('/', [
     user.password = await bcrypt.hash(password, salt);
     // Save after encrypt
     await user.save();
+    
+    // Issue token
+    const payload = {
+      user: {
+        id: user.id
+      }
+    }
 
-    res.send('User saved');
+    jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN
+    }, (err, token) => {
+      if (err) throw err;
+      res.json({ token })
+    });
 
   } catch (err) {
     console.error(err.message);
